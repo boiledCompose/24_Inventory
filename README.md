@@ -104,7 +104,36 @@ fun getItem(id: Int): Flow<Item>
 > - `Flow`를 반환 유형으로 사용하여 데이터베이스의 데이터가 변경될 때마다 알림을 받는다.
 > - `Room`에선 `Flow`를 자동으로 업데이트하므로 명시적으로 한 번만 데이터를 가져오면 된다.
 > - `Flow` 반환 유형으로 인해 Room은 백그라운드 스레드에서도 쿼리를 실행할 수 있다.
+<br>
 
+## Database
 
+`Database` 클래스는 정의된 DAO의 인스턴스를 앱에 제공한다. 앱은 제공받은 DAO를 사용하여 데이터베이스의 데이터를 연결된 데이터 항목 객체의 인스턴스로 검색할 수 있다.
+
+### 데이터베이스 만들기
+
+1. `Database` 클래스 파일을 만든다. 예. `InventoryDatabase.kt`
+2. `InventoryDatabase` 클래스를 `RoomDatabase`를 확장하는 `abstract` 클래스로 만든다.
+3. 클래스에 `@Database` 주석을 단다. 이 주석에는 `Room`이 데이터베이스를 빌드할 수 있도록 인수가 여러 개 필요하다.
+   - entities: 엔티티 클래스
+   - version: 데이터베이스 버전 번호. 테이블의 스키마를 변경할 때마다 버전 번호를 높여야 한다.
+   - exportSchema: 스키마 버전 기록 백업 여부
+
+   ```kotlin
+   @Database(entities = [Item::class], version = 1, exportSchema = false)
+   abstract class InventoryDatabase: RoomDatabase() { }
+   ```
+5. 데이터베이스가 DAO에 관해 알 수 있도록 `ItemDao`를 반환하는 추상 함수를 선언한다.
+   ```kotlin
+   abstract fun itemDao(): ItemDao
+   ```
+6. 객체 내에서 데이터베이스에 관한 비공개 변수를 선언한다.이 변수는 데이터베이스가 만들어지면 데이터베이스 참조를 유지한다. 이를 통해 주어진 시점에 열린 데이터베이스의 단일 인스턴스를 유지할 수 있다.
+   이 변수에 `@Volatile` 주석을 단다. `@Volatile` 주석은 휘발성 변수를 의미하며 이 변수의 값은 캐시되지 않으면 모든 읽기와 쓰기는 기본 메모리에서 이뤄진다. 이러한 기능을 사용하여 `Instance` 값을 항상 최신 상태로 유지하고 모든 실행 스레드에서 동일하게 유지할 수 있다.
+   ```kotlin
+   @Volatile
+   private var Instance: InventoryDatabase? = null
+   ```
+
+   
 
 
