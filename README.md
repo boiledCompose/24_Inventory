@@ -127,13 +127,16 @@ fun getItem(id: Int): Flow<Item>
    ```kotlin
    abstract fun itemDao(): ItemDao
    ```
-6. 객체 내에서 데이터베이스에 관한 비공개 변수를 선언한다.이 변수는 데이터베이스가 만들어지면 데이터베이스 참조를 유지한다. 이를 통해 주어진 시점에 열린 데이터베이스의 단일 인스턴스를 유지할 수 있다.
+6. 객체 내 `companion object` 안에 데이터베이스에 관한 비공개 변수를 선언한다.이 변수는 데이터베이스가 만들어지면 데이터베이스 참조를 유지한다. 이를 통해 주어진 시점에 열린 데이터베이스의 단일 인스턴스를 유지할 수 있다.
    이 변수에 `@Volatile` 주석을 단다. `@Volatile` 주석은 휘발성 변수를 의미하며 이 변수의 값은 캐시되지 않으면 모든 읽기와 쓰기는 기본 메모리에서 이뤄진다. 이러한 기능을 사용하여 `Instance` 값을 항상 최신 상태로 유지하고 모든 실행 스레드에서 동일하게 유지할 수 있다.
    ```kotlin
    @Volatile
    private var Instance: InventoryDatabase? = null
    ```
-
+7. `Instance` 아래에 데이터베이스 빌더에 필요한 `Context` 매개변수를 사용하여 `getDatabase()` 메서드를 정의한다. 이 메서드는 `InventoryDatabase` 유형을 반환한다.
+   ```kotlin
+   fun getDatabase(context: Context)
+   ```
    
 
 
