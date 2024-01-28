@@ -130,13 +130,54 @@ fun getItem(id: Int): Flow<Item>
 6. 객체 내 `companion object` 안에 데이터베이스에 관한 비공개 변수를 선언한다.이 변수는 데이터베이스가 만들어지면 데이터베이스 참조를 유지한다. 이를 통해 주어진 시점에 열린 데이터베이스의 단일 인스턴스를 유지할 수 있다.
    이 변수에 `@Volatile` 주석을 단다. `@Volatile` 주석은 휘발성 변수를 의미하며 이 변수의 값은 캐시되지 않으면 모든 읽기와 쓰기는 기본 메모리에서 이뤄진다. 이러한 기능을 사용하여 `Instance` 값을 항상 최신 상태로 유지하고 모든 실행 스레드에서 동일하게 유지할 수 있다.
    ```kotlin
-   @Volatile
-   private var Instance: InventoryDatabase? = null
+   companion object {
+      @Volatile
+      private var Instance: InventoryDatabase? = null
+   }
    ```
 7. `Instance` 아래에 데이터베이스 빌더에 필요한 `Context` 매개변수를 사용하여 `getDatabase()` 메서드를 정의한다. 이 메서드는 `InventoryDatabase` 유형을 반환한다.
-   ```kotlin
-   fun getDatabase(context: Context)
-   ```
-   
+8. `synchronized` 블록을 사용하여 두 개 이상의 스레드에서 동시에 데이터베이스 객체를 만들어 참조하는 상황을 방지해야 한다. 한 번에 한 실행 스레드만 이 `synchronized` 블록에 들어갈 수 있고 데이터베이스가 한 번만 초기화된다.      
+   `getDatabase()` 내에서 `Instance` 변수를 반환하거나, `Instance`가 null이면 `synchronized{}` 블록 내에서 초기화되도록 elvis 연산자 `?:`를 사용한다.
+9. `Room`의 데이터베이스 빌더를 사용하여 데이터베이스를 가져온다. 인수는 **애플리케이션 컨텍스트, 데이터베이스 클래스, 데이터베이스 이름**이다.
+    ```kotlin
+    //예제 코드
+    Room.databaseBuilder(context, InventoryDatabase::class.java, "item_database")
+    ```
+10. 데이터베이스 인스턴스를 만드려면 `.build()`를 호출한다.
+11. `also` 블록을 추가하고 최근에 만들어진 db 인스턴스에 대한 참조를 유지하도록 `Instance = it` 코드를 작성한다.
 
+최종적인 `getDatabase()` 메서드는 다음과 같다.
+```kotlin
+
+   ```kotlin
+   //7
+   fun getDatabase(context: Context): InventoryDatabase {
+      //8
+      return Instance ?: synchronized(this) {
+         //9
+         Room.databaseBuilder(context, InventoryDatabase::class.java, "item_database")
+                    //10
+                    .build()
+                    //11
+                    .also { Instance = it }
+      }
+   }
+   ```
+```
+
+### 저장소 구현
+
+이전에 서버 저장소를 구현하는 방법과 동일하게 구현하면 된다.
+
+1. `Repository` 인터페이스를 생성하고 필요한 메서드들을 선언한다.
+2. 인터페이스를 확장하는 `Repository` 클래스를 생성한다. `Dao` 유형의 매개변수를 전달한다.
+3. 인터페이스의 메서드들의 기능을 클래스 내부에 구현한다. `Dao`의 메서드들을 호출하면 된다.
+
+`AppContainer` 클래스에 `Repository` 객체를 반환하는 변수를 선언한다. 일반적으론 저장소가 호출되면 초기화되는 `lazy` 키워드를 사용한다.
+```kotlin
+//예제 코드드
+override val itemsRepository: ItemsRepository by lazy {
+    OfflineItemsRepository(InventoryDatabase.getDatabase(context).itemDao())
+}
+``` 
 
