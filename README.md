@@ -147,9 +147,8 @@ fun getItem(id: Int): Flow<Item>
 11. `also` 블록을 추가하고 최근에 만들어진 db 인스턴스에 대한 참조를 유지하도록 `Instance = it` 코드를 작성한다.
 
 최종적인 `getDatabase()` 메서드는 다음과 같다.
-```kotlin
-
    ```kotlin
+
    //7
    fun getDatabase(context: Context): InventoryDatabase {
       //8
@@ -163,7 +162,6 @@ fun getItem(id: Int): Flow<Item>
       }
    }
    ```
-```
 
 ### 저장소 구현
 
