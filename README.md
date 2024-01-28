@@ -144,20 +144,21 @@ fun getItem(id: Int): Flow<Item>
     Room.databaseBuilder(context, InventoryDatabase::class.java, "item_database")
     ```
 10. 데이터베이스 인스턴스를 만드려면 `.build()`를 호출한다.
+    
 11. `also` 블록을 추가하고 최근에 만들어진 db 인스턴스에 대한 참조를 유지하도록 `Instance = it` 코드를 작성한다.
 
 최종적인 `getDatabase()` 메서드는 다음과 같다.
    ```kotlin
 
-   //7
+   //6
    fun getDatabase(context: Context): InventoryDatabase {
-      //8
+      //7
       return Instance ?: synchronized(this) {
-         //9
+         //8
          Room.databaseBuilder(context, InventoryDatabase::class.java, "item_database")
-                    //10
+                    //9
                     .build()
-                    //11
+                    //10
                     .also { Instance = it }
       }
    }
